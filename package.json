@@ -19,5 +19,8 @@
     "react-dom": "18.3.1",
     "xlsx": "^0.18.5",
     "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "webpack-cli": "^6.0.1"
   }
 }
