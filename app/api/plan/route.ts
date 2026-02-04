@@ -43,6 +43,7 @@ function detectFromArabicDescription(desc: string) {
     [/تويوتا|toyota/i, "TOYOTA"],
     [/هيونداي|hyundai/i, "HYUNDAI"],
   ];
+
   let make = "";
   for (const [rx, val] of makeMap) {
     if (rx.test(d)) {
@@ -59,6 +60,7 @@ function detectFromArabicDescription(desc: string) {
     [/camry/i, "CAMRY"],
     [/staria/i, "STARIA"],
   ];
+
   let model = "";
   for (const [rx, val] of modelMap) {
     if (rx.test(d)) {
@@ -68,11 +70,9 @@ function detectFromArabicDescription(desc: string) {
   }
 
   const heavy =
-    /قلاب|شاحنة|دينا|تريلا|تريله|رأس|راس|قاطرة|سكس|معدات|حفار|ونش|باص|اتوبيس/i.test(
-      d
-    );
-  const category = heavy ? "HEAVY" : "";
+    /قلاب|شاحنة|دينا|تريلا|تريله|رأس|راس|قاطرة|سكس|معدات|حفار|ونش|باص|اتوبيس/i.test(d);
 
+  const category = heavy ? "HEAVY" : "";
   return { make, model, category };
 }
 
@@ -115,7 +115,6 @@ export async function POST(req: Request) {
   const colMake = findCol(headers, ["manufacturer", "make", "brand", "الشركة", "المصنع", "الماركة"]);
   const colModel = findCol(headers, ["model", "vehicle model", "الموديل", "طراز"]);
   const colYear = findCol(headers, ["model year", "year", "سنة الصنع", "ســنة الصنــــع", "السنة"]);
-  const colPlate = findCol(headers, ["plate no", "plate", "license", "registration", "رقم اللوحة", "اللوحة"]);
 
   const groupBy = opt.planBy === "owner" ? (colOwner || colLoc) : (colLoc || colOwner);
 
@@ -143,7 +142,7 @@ export async function POST(req: Request) {
 
     outRows.push({
       ...r,
-      "__group": groupBy ? String(r[groupBy] ?? "") : "DEFAULT",
+      __group: groupBy ? String(r[groupBy] ?? "") : "DEFAULT",
       "Recommended Teltonika Device": rec.recommendedDevice,
       "CAN Accessory": rec.canAccessory,
       "Supported CAN Adapters": rec.supportedAdapters,
@@ -165,7 +164,7 @@ export async function POST(req: Request) {
 
   const byGroup = new Map<string, any>();
   for (const r of outRows) {
-    const g = (r["__group"] || "DEFAULT").toString().trim() || "DEFAULT";
+    const g = (r.__group || "DEFAULT").toString().trim() || "DEFAULT";
     const dev = r["Recommended Teltonika Device"];
     if (!byGroup.has(g)) byGroup.set(g, { group: g, count: 0, devices: {}, minutes: 0 });
     const o = byGroup.get(g);
@@ -177,6 +176,7 @@ export async function POST(req: Request) {
 
   let dayCursor = 0;
   const planRows: any[] = [];
+
   for (const g of groups) {
     g.minutes = g.count * minutesPerVehicle;
     const days = Math.max(1, Math.ceil(g.minutes / minutesPerDayTeam));
@@ -238,8 +238,9 @@ export async function POST(req: Request) {
 
   if (opt.includeRecommendations !== false) {
     const sheet = outWb.addWorksheet("Recommendations");
+
     sheet.columns = Object.keys(outRows[0])
-      .filter((k) => k !== "__group")
+      .filter((k) => k !== "__group" && k !== "__group")
       .map((k) => ({
         header: k,
         key: k,
@@ -248,7 +249,7 @@ export async function POST(req: Request) {
 
     outRows.forEach((r) => {
       const rr = { ...r };
-      delete rr["__group"];
+      delete rr.__group;
       sheet.addRow(rr);
     });
 
@@ -282,9 +283,8 @@ export async function POST(req: Request) {
 
   const excelBuf = await outWb.xlsx.writeBuffer();
 
-  // PDF (simple summary)
+  // PDF
   let pdfBytes: Uint8Array | null = null;
-
   if (opt.includePdf !== false) {
     const pdf = await PDFDocument.create();
     const page = pdf.addPage([595.28, 841.89]);
