@@ -364,15 +364,18 @@ export async function POST(req: Request) {
     pdfBytes = await pdf.save();
   }
 
-  // ZIP
- const zipBuf = await zip.generateAsync({ type: "nodebuffer" });
+   // ZIP
+  const zip = new JSZip();
+  zip.file("ALRAKEEN_Output.xlsx", Buffer.from(excelBuf));
+  if (pdfBytes) zip.file("ALRAKEEN_Report.pdf", Buffer.from(pdfBytes));
 
-// Convert Buffer -> Uint8Array so TS/Next accepts it as BodyInit
-return new NextResponse(new Uint8Array(zipBuf), {
-  headers: {
-    "Content-Type": "application/zip",
-    "Content-Disposition": "attachment; filename=ALRAKEEN_Project_Pack.zip",
-  },
-});
+  const zipBuf = await zip.generateAsync({ type: "nodebuffer" });
 
-  
+  // Convert Buffer -> Uint8Array so NextResponse accepts it
+  return new NextResponse(new Uint8Array(zipBuf), {
+    headers: {
+      "Content-Type": "application/zip",
+      "Content-Disposition": "attachment; filename=ALRAKEEN_Project_Pack.zip",
+    },
+  });
+}
