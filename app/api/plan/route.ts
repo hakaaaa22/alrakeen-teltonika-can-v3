@@ -1,4 +1,3 @@
-\
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
